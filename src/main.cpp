@@ -3,8 +3,11 @@
 #include <string>
 
 //#include "../app/logging/log_util.h"
+#include <libssh/libsshpp.hpp>
 #include "app/parameters/app_signature.h"
 //#include "../core/datetime/date_time.h"
+
+#include "sftp_server.h"
 
 //#include "data/adt/linked_list.h"
 //#include "data/adt/red_black_tree.h"
@@ -145,18 +148,18 @@ int main(int argc, char ** argv)
 */
    try
    {
+      try
+      {
+         charon::sftp_server server("localhost", 22);
+         server.connect();
+      }
+      catch (ssh::SshException & sshe)
+      {
+         std::cerr << "Error attaching to SFTP server : " << sshe.getError() << std::endl;
+         exit(16);
+      }
+
       std::cout << "charon: bare-bones SFTP client" << std::endl;
-      //if (appsig.is_param_used("conf"))
-      //   test_config("../src/tests/conf.xml");
-
-      //test_log();
-
-      //test_stack();
-
-      //test_rb_tree();
-
-      //test_list();
-
    }
    catch (const std::exception & e)
    {
