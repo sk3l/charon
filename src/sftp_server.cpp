@@ -1,3 +1,4 @@
+#include <iostream>
 #include <memory>
 #include <sstream>
 
@@ -7,8 +8,6 @@
 
 
 #include "sftp_server.h"
-
-
 
 
 namespace charon {
@@ -31,10 +30,9 @@ sftp_server::~sftp_server()
    this->session_ = nullptr;
 }
 
-void sftp_server::connect()
+void sftp_server::connect(const std::string & user)
 {
    // Build the connection
-		
 
 	int rc = ssh_connect(this->session_);
   	if (rc != SSH_OK)
@@ -49,17 +47,17 @@ void sftp_server::connect()
 
    // Authenticate the server
    //
-   this->auth_server();
+   this->authenticate_server();
 
    // Authenticate the user
    //
-   this->auth_user();
+   this->authenticate_user(user);
 
 
    this->connected_ = true;
 }
 
-void sftp_server::auth_server()
+void sftp_server::authenticate_server()
 {
    int rc, state;
    size_t hlen;
@@ -67,7 +65,6 @@ void sftp_server::auth_server()
    char buf[10];
 
    bool auth_ok = true;
-
 
    ssh_key server_key;
  
@@ -89,31 +86,38 @@ void sftp_server::auth_server()
       break;
 
       case SSH_SERVER_KNOWN_CHANGED:
-         fprintf(stderr, "Host key for server changed: it is now:\n");
+         std::cerr << "Host key for server changed! It is now:" 
+                   << std::endl;
          ssh_print_hexa("Public key hash", hash, hlen);
-         fprintf(stderr, "For security reasons, connection will be stopped\n");
+         std::cerr << "For security reasons, connection will be stopped" 
+                   << std::endl;
          auth_ok = false;
       break;
 
       case SSH_SERVER_FOUND_OTHER:
-         fprintf(stderr, "The host key for this server was not found but an other"
-         "type of key exists.\n");
-         fprintf(stderr, "An attacker might change the default server key to"
-         "confuse your client into thinking the key does not exist\n");
+         std::cerr << "The host key for this server was not found but"
+                   << " an other type of key exists."
+                   << std::endl;
+         std::cerr << "An attacker might change the default server key to "
+                   << "convince your client the key does not exist"
+                   << std::endl;
          auth_ok = false;
       break;
 
       case SSH_SERVER_FILE_NOT_FOUND:
-         fprintf(stderr, "Could not find known host file.\n");
-         fprintf(stderr, "If you accept the host key here, the file will be"
-            "automatically created.\n");
+         std::cerr << "Could not find known host file." << std::endl;
+         std::cerr << "If you accept the host key here, the file will be"
+                   << "automatically created."
+                   << std::endl;
        // fallback to SSH_SERVER_NOT_KNOWN behavior
      
       case SSH_SERVER_NOT_KNOWN:
       {
          std::unique_ptr<char> hexa(ssh_get_hexa(hash, hlen));
-         fprintf(stderr,"The server is unknown. Do you trust the host key?\n");
-         fprintf(stderr, "Public key hash: %s\n", hexa.get());
+         
+         std::cerr << "The server is unknown. Do you trust the host key?"
+                   << std::endl;
+         std::cerr << "Public key hash: " << hexa.get() << std::endl;
          if (fgets(buf, sizeof(buf), stdin) == NULL)
          {
             auth_ok = false;
@@ -128,14 +132,14 @@ void sftp_server::auth_server()
 
          if (ssh_write_knownhost(this->session_) < 0)
          {
-            fprintf(stderr, "Error %s\n", strerror(errno));
+            std::cerr << "Error " << strerror(errno) << std::endl;
             auth_ok = false;
             break;
          }
       }
 
       case SSH_SERVER_ERROR:
-         fprintf(stderr, "Error %s", ssh_get_error(this->session_));
+         std:: cerr << "Error " << ssh_get_error(this->session_) << std::endl;
          auth_ok = false;
 
    } 
@@ -147,9 +151,63 @@ void sftp_server::auth_server()
       
 }
 
-void sftp_server::auth_user()
+void sftp_server::authenticate_user(const std::string & user)
 {
+	int rc;
+	bool success = false;
 
+   // First try anonymous access (auth = 'none')
+   rc = ssh_userauth_none(this->session_, user.c_str());
+ 	if (rc == SSH_AUTH_ERROR)
+   {
+      std::cerr << "Authentication failed: " <<	ssh_get_error(this->session_)
+		    		 << std::endl;
+  		throw ssh::SshException(this->session_);
+	}
+	else if (rc == SSH_AUTH_SUCCESS)
+   {
+      success = true;  
+   }
+   else
+   {  
+      // Now let the server dictate what it'll accept
+      int method = ssh_userauth_list(this->session_, user.c_str());
+      if (method & SSH_AUTH_METHOD_PUBLICKEY)
+      {
+  		   rc = ssh_userauth_publickey_auto(this->session_, nullptr, nullptr);
+  		   // TO DO - handle full set of pubkey auth conditions
+		   if (rc == SSH_AUTH_ERROR)
+  		   {
+     		   std::cerr << "Authentication failed: " <<	ssh_get_error(this->session_)
+				   		 << std::endl;
+  			   throw ssh::SshException(this->session_);
+		   }
+		   success = true;
+      }
+ 
+      if (method & SSH_AUTH_METHOD_PASSWORD)
+      {
+  		   std::unique_ptr<char> password(getpass("Enter your password: "));
+  		   // TO DO - get rid of password(), use custom password echo function
+		   rc = ssh_userauth_password(this->session_, NULL, password.get());
+  		   if (rc == SSH_AUTH_ERROR)
+  		   {
+     		   std::cerr << "Authentication failed: "	
+				   		 << ssh_get_error(this->session_);
+  			   throw ssh::SshException(this->session_);
+  		   } 
+		   success = true;
+      }
+     
+      if (method & SSH_AUTH_METHOD_INTERACTIVE)
+      {
+		   // TO DO 
+      }
+      
+   }
+
+	if (!success)
+   	throw ssh::SshException(this->session_);
 }
 
 void sftp_server::set_log_verbosity(sftp_log_level level)

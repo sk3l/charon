@@ -26,15 +26,15 @@ namespace charon {
          bool 				connected_;
          sftp_log_level log_level_;
 
-         void auth_server();
-         void auth_user();
+         void authenticate_server();
+         void authenticate_user(const std::string & user);
 
       public :
 
          sftp_server(const std::string & host, long port);
          ~sftp_server();
 
-         void connect();
+         void connect(const std::string & user);
 
          void  set_log_verbosity(sftp_log_level level);
          
