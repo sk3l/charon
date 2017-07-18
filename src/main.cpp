@@ -151,8 +151,12 @@ int main(int argc, char ** argv)
       try
       {
          charon::sftp_server server("localhost", 22);
-         server.connect(argv[1]);
-         std::cout << "Successfully connected to remote SFTP host." << std::endl;
+         if (!server.connect(argv[1]))
+         {
+            std::cerr << "Unable to connect to remote SFTP host." << std::endl;
+            exit(8);
+         }
+         std::cout << "*--Successfully connected to remote SFTP host." << std::endl;
       }
       catch (ssh::SshException & sshe)
       {
