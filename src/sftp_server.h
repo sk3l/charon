@@ -41,6 +41,8 @@ namespace charon {
          inline sftp_log_level get_log_verbosity() const {return this->log_level_;}
          inline bool           is_connected() {return this->connected_;}
 
+         inline ssh_session    get_ssh_session() const {return this->session_;}
+
          sftp_server(const sftp_server & rhs) = delete;
          sftp_server & operator=(const sftp_server & rhs) = delete;
 
