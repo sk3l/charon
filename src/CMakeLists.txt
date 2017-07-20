@@ -32,14 +32,14 @@ endif()
 set(
    INCLUDES
    ${PROJECT_SOURCE_DIR}/sftp_server.h
-   ${PROJECT_SOURCE_DIR}/sftp_session.h
+   ${PROJECT_SOURCE_DIR}/sftp_connection.h
 )
 
 set(
    SRCFILES
    ${PROJECT_SOURCE_DIR}/main.cpp
    ${PROJECT_SOURCE_DIR}/sftp_server.cpp
-   ${PROJECT_SOURCE_DIR}/sftp_session.cpp
+   ${PROJECT_SOURCE_DIR}/sftp_connection.cpp
 )
 
 #message("${CMAKE_HOME_DIRECTORY}/../build/")

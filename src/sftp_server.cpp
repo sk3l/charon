@@ -4,24 +4,28 @@
 
 #include <string.h>
 
-#include <libssh/libsshpp.hpp>
-
-
+#include <sftp_connection.h>
 #include "sftp_server.h"
 
+#include <libssh/libsshpp.hpp>
 
 namespace charon {
 
 sftp_server::sftp_server(const std::string & host, long port)
-   :
-      session_(ssh_new()),
-		host_(host),
-		port_(port),
-		connected_ (false),
-		log_level_(Warn)
+   : session_(ssh_new()),
+     host_(host)
 {
-   ssh_options_set(this->session_, SSH_OPTIONS_HOST, host_.c_str());
-   ssh_options_set(this->session_, SSH_OPTIONS_PORT,  &port_);
+   if (ssh_options_set(this->session_, SSH_OPTIONS_HOST, host_.c_str()) != SSH_OK)
+   {
+      ssh_free(this->session_);
+      throw std::logic_error("Encountered error assigning sftp_server host.");
+   }
+
+   if (ssh_options_set(this->session_, SSH_OPTIONS_PORT,  &port) != SSH_OK)
+   {
+      ssh_free(this->session_);
+      throw std::logic_error("Encountered error assigning sftp_server port.");
+   }
 }
 
 sftp_server::~sftp_server()
@@ -30,28 +34,27 @@ sftp_server::~sftp_server()
    this->session_ = nullptr;
 }
 
-bool sftp_server::connect(const std::string & user)
+sftp_conn_ptr sftp_server::connect(const std::string & user)
 {
    // Build the connection
 
 	int rc = ssh_connect(this->session_);
   	if (rc != SSH_OK)
   	{
-		//std::stringstream err;
- 		//err << "Error connecting to " << this->host_
-      //    << ssh_get_error(this->session_);
+      std::cerr << "Error connecting to " << this->host_
+                << ssh_get_error(this->session_);
 
 		throw ssh::SshException(this->session_);
   	}
 
-
    // Authenticate the server
    // Authenticate the user
-   //
-   this->connected_ =
-      (this->authenticate_server() && this->authenticate_user(user));
 
-   return this->connected_;
+   sftp_conn_ptr conn;
+   if (this->authenticate_server() && this->authenticate_user(user))
+      conn.reset(new sftp_connection(this->session_));
+
+   return conn;
 }
 
 bool sftp_server::authenticate_server()
@@ -243,9 +246,24 @@ bool sftp_server::authenticate_user(const std::string & user)
    return false;
 }
 
-void sftp_server::set_log_verbosity(sftp_log_level level)
+bool sftp_server::is_connected() const
 {
+   return (ssh_is_connected(this->session_) == 1);
+}
 
+std::string sftp_server::get_host() const
+{
+   return this->host_;
+}
+
+long sftp_server::get_port() const
+{
+   unsigned int port;
+
+   if (ssh_options_get_port(this->session_, &port) == SSH_OK)
+      return port;
+   else
+      return -1;
 }
 
 }

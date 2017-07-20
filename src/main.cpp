@@ -7,6 +7,7 @@
 #include "app/parameters/app_signature.h"
 //#include "../core/datetime/date_time.h"
 
+#include "sftp_connection.h"
 #include "sftp_server.h"
 
 //#include "data/adt/linked_list.h"
@@ -151,7 +152,9 @@ int main(int argc, char ** argv)
       try
       {
          charon::sftp_server server("localhost", 22);
-         if (!server.connect(argv[1]))
+
+         charon::sftp_conn_ptr conn = server.connect(argv[1]);
+         if (!conn)
          {
             std::cerr << "Unable to connect to remote SFTP host." << std::endl;
             exit(8);
