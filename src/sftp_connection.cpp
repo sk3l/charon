@@ -31,4 +31,9 @@ sftp_connection::~sftp_connection()
    this->sftp_sess_ = nullptr;
 }
 
+sftp_directory sftp_connection::read_directory(const std::string & path)
+{
+   return sftp_directory(this->sftp_sess_, path);
+}
+
 }

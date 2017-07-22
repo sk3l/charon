@@ -6,6 +6,8 @@
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 
+#include "sftp_directory.h"
+
 namespace charon {
 
    class sftp_connection
@@ -22,6 +24,8 @@ namespace charon {
          sftp_connection(const sftp_connection & rhs) = delete;
          sftp_connection & operator=(const sftp_connection & rhs) = delete;
 
+
+         sftp_directory read_directory(const std::string & path);
    };
 }
 

@@ -8,6 +8,7 @@
 //#include "../core/datetime/date_time.h"
 
 #include "sftp_connection.h"
+#include "sftp_directory.h"
 #include "sftp_server.h"
 
 //#include "data/adt/linked_list.h"
@@ -160,6 +161,10 @@ int main(int argc, char ** argv)
             exit(8);
          }
          std::cout << "*--Successfully connected to remote SFTP host." << std::endl;
+
+         charon::sftp_directory dir = conn->read_directory("Code");
+
+         std::cout << dir; 
       }
       catch (ssh::SshException & sshe)
       {

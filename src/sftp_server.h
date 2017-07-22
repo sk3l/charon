@@ -24,8 +24,8 @@ namespace charon {
    {
       private :
 
-         ssh_session session_;
-         std::string host_;
+         ::ssh_session  session_;
+         std::string    host_;
 
          bool authenticate_server();
          bool authenticate_user(const std::string & user);
