@@ -34,6 +34,7 @@ set(
    ${PROJECT_SOURCE_DIR}/sftp_server.h
    ${PROJECT_SOURCE_DIR}/sftp_connection.h
    ${PROJECT_SOURCE_DIR}/sftp_directory.h
+   ${PROJECT_SOURCE_DIR}/sftp_file.h
 )
 
 set(
@@ -42,6 +43,7 @@ set(
    ${PROJECT_SOURCE_DIR}/sftp_server.cpp
    ${PROJECT_SOURCE_DIR}/sftp_connection.cpp
    ${PROJECT_SOURCE_DIR}/sftp_directory.cpp
+   ${PROJECT_SOURCE_DIR}/sftp_file.cpp
 )
 
 #message("${CMAKE_HOME_DIRECTORY}/../build/")

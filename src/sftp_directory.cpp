@@ -28,9 +28,14 @@ sftp_directory::sftp_directory(sftp_session session, const std::string & path)
       throw std::logic_error(err);
    }
    
-   while ((attributes = sftp_readdir(this->session_, dir)) != NULL)
-      this->attributes_.push_back(sftp_attrib_ptr(attributes));
-   
+   while ((attributes = sftp_readdir(this->session_, dir)) != nullptr)
+   {
+      this->files_.push_back
+      (
+         sftp_file_ptr(new sftp_file(std::move(attributes)))
+      );
+   }
+
    if (!sftp_dir_eof(dir))
    {
       std::string err = "Error reading directory at '";
@@ -53,32 +58,13 @@ sftp_directory::sftp_directory(sftp_session session, const std::string & path)
 
 sftp_directory::sftp_directory(const sftp_directory & rhs)
    : session_(rhs.session_),
-     path_(rhs.path_)
+     path_(rhs.path_),
+     files_(rhs.files_)
 {
-   for (auto it = rhs.attributes_.begin(); it != rhs.attributes_.end(); ++it)
-   {
-      sftp_attrib_ptr tmp(new struct sftp_attributes_struct());
-      tmp->name = strdup(it->get()->name);
-      tmp->size = it->get()->size;
-      tmp->permissions = it->get()->permissions;
-      tmp->owner= strdup(it->get()->owner);
-      tmp->uid = it->get()->uid;
-      tmp->group = strdup(it->get()->group);
-      tmp->gid = it->get()->gid;
- 
-      this->attributes_.push_back(std::move(tmp));
-   }
 }
 
 sftp_directory::~sftp_directory()
 {
-
-   for (auto it = this->attributes_.begin(); it != this->attributes_.end(); ++it)
-   {
-      sftp_attributes_free(it->get());
-      it->release();
-   }
-   
 }
 
 }
