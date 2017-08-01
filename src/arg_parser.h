@@ -22,7 +22,7 @@ namespace charon {
 
          arg operator[](const std::string & name);
 
-         bool validate(int argc, char ** argv);
+         bool parse(int argc, char ** argv);
          void print_usage() const;
 
          

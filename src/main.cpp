@@ -20,11 +20,8 @@ int main(int argc, char ** argv)
    {
       charon::arg_parser ap;
 
-      if (!ap.validate(argc, argv))
-      {
-         ap.print_usage();
+      if (!ap.parse(argc, argv))
          exit(16);
-      }
 
       try
       {

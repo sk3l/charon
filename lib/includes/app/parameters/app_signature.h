@@ -48,6 +48,7 @@ namespace app {
          position_lst_t positional_;
 
       public:
+
          basic_app_signature(const string_t & name, const string_t & desc = "")
             : app_name_(name),
               app_desc_(desc),
@@ -101,7 +102,15 @@ namespace app {
             return this->get_parameter(name);
          }
 
-         bool validate(int argc, charT ** args)
+         enum parse_result
+         {
+            BAD_OPTIONAL   = -2,
+            BAD_POSITONAL  = -1,
+            OK             = 0,
+            ASK_FOR_HELP   = 1
+         };
+
+         parse_result parse(int argc, charT ** args, bool printHelp = true)
          {
             option_ptr_t option; // Keep track of previous option string
 
@@ -123,9 +132,16 @@ namespace app {
                            arg.substr(start)
                         );
 
+                     if (name == "help")
+                     {
+                        if (printHelp)
+                           this->print_usage();
+                        return ASK_FOR_HELP;
+                     }
+
                      auto p = this->optional_by_lname_.find(name);
                      if (p == this->optional_by_lname_.end())
-                        return false;
+                        return BAD_OPTIONAL;
 
                      option = p->get_val();
                   }
@@ -140,9 +156,16 @@ namespace app {
                            arg.substr(start)
                         );
 
+                     if (alias == "h")
+                     {
+                        if (printHelp)
+                           this->print_usage();
+                        return ASK_FOR_HELP;
+                     }
+
                      auto p =  this->optional_by_sname_.find(alias);
                      if (p == this->optional_by_sname_.end())
-                        return false;
+                        return BAD_OPTIONAL;
 
                      option = p->get_val();
                   }
@@ -150,7 +173,7 @@ namespace app {
                   else if(positional_it == this->positional_.end())
                   {
                      // Unknown param
-                     return false;
+                     return BAD_POSITONAL;
                   }
 
                   positional_it->get()->set_value(arg);
@@ -170,7 +193,7 @@ namespace app {
                   )
                   {
                      // Consecutive optional params w/o a value
-                     return false;
+                     return BAD_OPTIONAL;
                   }
 
                   // Set the value for the previously encountered parameter.
@@ -181,25 +204,25 @@ namespace app {
 
             // Verify no trailing option w/o a value
             if (option)
-               return false;
+               return BAD_OPTIONAL;
 
             // Verify all required params were present
             if (positional_it != this->positional_.end())
-               return false;
+               return BAD_POSITONAL;
 
-            return true;
+            return OK;
          }
 
          void print_usage() const
          {
-            std::cout << this->app_name_;
+            std::cerr << this->app_name_;
             if (this->app_desc_.length() > 0)
-               std::cout << " - " << this->app_desc_;
-            std::cout << std::endl << std::endl;
+               std::cerr << " - " << this->app_desc_;
+            std::cerr << std::endl << std::endl;
 
-            std::cout << "USAGE:" << std::endl << std::endl;
+            std::cerr << "USAGE:" << std::endl << std::endl;
 
-            std::cout << "    " << this->app_name_;
+            std::cerr << "    " << this->app_name_;
 
             std::stringstream ss;
             for
@@ -209,7 +232,7 @@ namespace app {
                ++it
             )
             {
-               std::cout << " " << it->get_val()->get_usage_str();
+               std::cerr << " " << it->get_val()->get_usage_str();
 
                ss << it->get_val()->get_name();
                ss << " - "  << it->get_val()->get_desc();
@@ -223,15 +246,15 @@ namespace app {
                ++it
             )
             {
-               std::cout << " " << it->get()->get_usage_str();
+               std::cerr << " " << it->get()->get_usage_str();
 
                ss << it->get()->get_name();
                ss << " - "  << it->get()->get_desc();
                ss << std::endl;
             }
 
-            std::cout << std::endl << std::endl;
-            std::cout << ss.str()  << std::endl;
+            std::cerr << std::endl << std::endl;
+            std::cerr << ss.str()  << std::endl;
          }
 
    };
