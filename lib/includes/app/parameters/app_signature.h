@@ -1,6 +1,7 @@
 #ifndef APP_SIGNATURE_H
 #define APP_SIGNATURE_H
 
+#include <iostream>
 #include <string>
 #include <memory>
 #include <typeinfo>
@@ -20,171 +21,223 @@ namespace app {
    class basic_app_signature
    {
       private:
-         using string_t    = std::basic_string<charT,traits>;
-         using param_t     = basic_app_param<charT,traits>;
-         using param_base_t= std::shared_ptr<param_t>;
-         using param_map_t = sk3l::data::adt::open_hash_map<string_t, param_base_t>;
-         using param_list_t= std::vector<param_base_t>;        
+         using string_t       = std::basic_string<charT,traits>;
+
+         using param_t        = basic_app_param<charT,traits>;
+         using param_ptr_t    = std::shared_ptr<param_t>;
+         using param_map_t    = sk3l::data::adt::open_hash_map<string_t, param_ptr_t>;
+
+         using option_prm_t   = basic_optional_param<charT,traits>;
+         using option_ptr_t   = std::shared_ptr<option_prm_t>;
+         using option_map_t   = sk3l::data::adt::open_hash_map<string_t, option_ptr_t>;
+
+         using position_prm_t = basic_positional_param<charT,traits>;
+         using position_ptr_t = std::shared_ptr<position_prm_t>;
+         using position_lst_t = std::vector<position_ptr_t>;
 
          static constexpr charT const * NAME_DELIM = "--";
          static constexpr charT const * ALIAS_DELIM = "-";
 
-         param_map_t    allowed_params_;
-         param_map_t    current_params_;
-         param_list_t   required_params_;
+
+         string_t       app_name_;
+         string_t       app_desc_;
+
+         param_map_t    params_;
+         option_map_t   optional_by_lname_;
+         option_map_t   optional_by_sname_;
+         position_lst_t positional_;
 
       public:
-         basic_app_signature()
-            : allowed_params_(32, sk3l::data::adt::string_hash()),
-              current_params_(32, sk3l::data::adt::string_hash())
+         basic_app_signature(const string_t & name, const string_t & desc = "")
+            : app_name_(name),
+              app_desc_(desc),
+              params_(32, sk3l::data::adt::string_hash()),
+              optional_by_lname_(32, sk3l::data::adt::string_hash()),
+              optional_by_sname_(32, sk3l::data::adt::string_hash()),
+              positional_()
          {}
 
-         basic_app_signature(const param_list_t & plist)
-            : allowed_params_(32, sk3l::data::adt::string_hash())
+         option_ptr_t add_optional
+         (
+            const string_t & name,
+            const string_t & desc,
+            const string_t & lname,
+            const string_t & sname,
+            bool is_switch = false
+         )
          {
-            for (auto it = plist.cbegin(); it != plist.cend(); ++it)
-            {
-               const param_base_t & param = *it;
-               this->allowed_params_.insert(param->get_name(), param);
-
-               if (param->get_alias().size() > 0)
-                  this->allowed_params_.insert(param->get_alias(), param);
-
-               if (param->get_is_required())
-                  this->required_params_.push_back(param);
-            }
+            option_ptr_t opt(new option_prm_t(name, desc, lname, sname, is_switch));
+            this->params_.insert(name, opt);
+            this->optional_by_lname_.insert(lname, opt);
+            this->optional_by_sname_.insert(sname = opt);
+            return opt;
          }
 
-         void insert(const param_base_t & p)
+         position_ptr_t add_positionial
+         (
+            const string_t & name,
+            const string_t & desc
+         )
          {
-            string_t name =
-               sk3l::core::text::string_util::to_lower(p->get_name());
+            position_ptr_t pos(new position_prm_t(name, desc, this->positional_.size()+1));
+            this->params_.insert(name, pos);
+            this->positional_.push_back(pos);
+            return pos;
+         }
 
-            this->allowed_params_.insert(name, p);
-            if (p->get_alias().size() > 0)
-            {
-               string_t alias =
-                  sk3l::core::text::string_util::to_lower(p->get_alias());
-               this->allowed_params_.insert(alias, p);
-           }
+         param_ptr_t get_parameter(const string_t & name)
+         {
+            param_ptr_t p;
 
-           if (p->get_is_required())
-              this->required_params_.push_back(p);
- 
-         } 
+            auto p_it = this->params_.find(name);
+            if (p_it != this->params_.end())
+               p = p_it->get_val();
 
-         void remove(const param_t & p) {}   // TO DO
+            return p;
+         }
+
+         param_ptr_t operator[](const string_t & name)
+         {
+            return this->get_parameter(name);
+         }
 
          bool validate(int argc, charT ** args)
          {
-            param_base_t prev;
+            option_ptr_t option; // Keep track of previous option string
+
+            auto positional_it = this->positional_.begin();
+
             for (int i = 1; i < argc; ++i) // Skip first argument, program name.
             {
                string_t arg(args[i]);
 
-               if (!prev)
+               if (!option)
                {
-                  typename param_map_t::iterator p;
-                  // Attempt to locate a parameter matching the argument
-                  // by name.
-               
+                  // Attempt to locate a parameter by long name
                   if(arg.substr(0,2) == string_t(NAME_DELIM))
                   {
                      size_t start = arg.find_first_not_of(NAME_DELIM);
-                     string_t name = 
+                     string_t name =
                         sk3l::core::text::string_util::to_lower
                         (
                            arg.substr(start)
                         );
-                     
-                     p = this->allowed_params_.find(name);
-                     if (p == this->allowed_params_.end())
+
+                     auto p = this->optional_by_lname_.find(name);
+                     if (p == this->optional_by_lname_.end())
                         return false;
-   
+
+                     option = p->get_val();
                   }
-                  // Attempt to locate a parameter matching the argument
-                  // by alias.
+                  // Attempt to locate a parameter by short name
                   else if(arg.substr(0,1) == string_t(ALIAS_DELIM))
                   {
-   
+
                      size_t start = arg.find_first_not_of(ALIAS_DELIM);
-                     string_t alias = 
+                     string_t alias =
                         sk3l::core::text::string_util::to_lower
                         (
                            arg.substr(start)
                         );
-  
-                     p =  this->allowed_params_.find(alias);
-                     if (p == this->allowed_params_.end())
+
+                     auto p =  this->optional_by_sname_.find(alias);
+                     if (p == this->optional_by_sname_.end())
                         return false;
-   
+
+                     option = p->get_val();
                   }
-                  else 
+                  // Not an optional parameter; check against non-option list.
+                  else if(positional_it == this->positional_.end())
                   {
                      // Unknown param
                      return false;
                   }
-   
-                  // Verify the parameter is where it's expected to be.
-                  int order = p->get_val()->get_order();
-                  if (order != param_t::NO_ORDER && order != i)
-                     return false;
-   
-                  this->current_params_.insert(p->get_val()->get_name(), p->get_val());
-                  prev = p->get_val();
-                  continue;
-               }
-               else 
-               {
-                  // If previous parameter didn't require an associated value,
-                  // then this string is some unknown value. 
-                  if (typeid(prev.get()) == typeid(sk3l::app::switch_app_param))
-                     return false;
 
-                  // Parse the value for the previously encountered parameter.
-                  if (!prev->parse_value(arg))
+                  positional_it->get()->set_value(arg);
+                  ++positional_it;
+               }
+               else if (option->get_is_switch())
+               {
+                  option->set_value("1");
+                  option.reset();
+               }
+               else
+               {
+                  if
+                  (
+                     arg.substr(0,2) == string_t(NAME_DELIM) ||
+                     arg.substr(0, 1) == string_t(ALIAS_DELIM)
+                  )
+                  {
+                     // Consecutive optional params w/o a value
                      return false;
+                  }
+
+                  // Set the value for the previously encountered parameter.
+                  option->set_value(arg);
+                  option.reset();
                }
             }
 
-            // Verify all required params are present           
-            for 
-            (
-               auto it = this->required_params_.cbegin();
-               it != this->required_params_.cend();
-               ++it
-            )
-            {
-               if (!this->current_params_.exists(it->get()->get_name()))
-                  return false;
-            } 
+            // Verify no trailing option w/o a value
+            if (option)
+               return false;
 
-            // Verify all params encountered have an associated value.
-            for
-            (
-               auto it = this->current_params_.begin();
-               it != this->current_params_.end();
-               ++it
-            )
-            {
-               if (!it->get_val().get()->has_value())
-                  return false;
-            }          
+            // Verify all required params were present
+            if (positional_it != this->positional_.end())
+               return false;
 
             return true;
          }
 
-         bool is_param_used(const string_t & name)
+         void print_usage() const
          {
-            return this->current_params_.exists(name);
+            std::cout << this->app_name_;
+            if (this->app_desc_.length() > 0)
+               std::cout << " - " << this->app_desc_;
+            std::cout << std::endl << std::endl;
+
+            std::cout << "USAGE:" << std::endl << std::endl;
+
+            std::cout << "    " << this->app_name_;
+
+            std::stringstream ss;
+            for
+            (
+               auto it = this->optional_by_sname_.begin();
+               it != this->optional_by_sname_.end();
+               ++it
+            )
+            {
+               std::cout << " " << it->get_val()->get_usage_str();
+
+               ss << it->get_val()->get_name();
+               ss << " - "  << it->get_val()->get_desc();
+               ss << std::endl;
+            }
+
+            for
+            (
+               auto it = this->positional_.begin();
+               it != this->positional_.end();
+               ++it
+            )
+            {
+               std::cout << " " << it->get()->get_usage_str();
+
+               ss << it->get()->get_name();
+               ss << " - "  << it->get()->get_desc();
+               ss << std::endl;
+            }
+
+            std::cout << std::endl << std::endl;
+            std::cout << ss.str()  << std::endl;
          }
 
    };
-   
+
    using app_signature  = basic_app_signature<char, std::char_traits<char> >;
-   using wapp_signature = basic_app_signature<wchar_t, std::char_traits<wchar_t> >; 
-   using app_param      = basic_app_param<char, std::char_traits<char> >;
-   using wapp_param     = basic_app_param<wchar_t, std::char_traits<wchar_t> >; 
+   using wapp_signature = basic_app_signature<wchar_t, std::char_traits<wchar_t> >;
 
 }
 }

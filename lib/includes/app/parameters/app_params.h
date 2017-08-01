@@ -9,156 +9,216 @@
 namespace sk3l {
 namespace app {
 
+   enum param_type
+   {
+      NONE = -1,
+      POSITIONAL,
+      OPTIONAL
+   };
+
    // Encapsulates a single application parameter.
    template<typename charT = char,
             typename traits= std::char_traits<charT> >
    class basic_app_param
    {
-      public:         
-        static const int NO_ORDER = -1;
+      public:
 
       protected:
-         using string_t = std::basic_string<charT,traits>; 
+         using string_t = std::basic_string<charT,traits>;
 
          string_t    name_;
          string_t    desc_;
-         string_t    alias_;
-         int         order_;
-         bool        is_required_;
-      
+         string_t    value_;
+
       public:
 
-         basic_app_param()
-            : name_(),
-              desc_(),
-              alias_(),
-              order_(NO_ORDER),
-              is_required_(false)
+         basic_app_param
+         (
+            const string_t & name,
+            const string_t & desc,
+            const string_t & val
+         )
+           : name_(name),
+             desc_(desc),
+             value_(val)
          {}
 
-         basic_app_param(
-            string_t name, 
-            string_t desc  = "", 
-            string_t alias = "",
-            int order      = basic_app_param::NO_ORDER, 
-            bool required  = false
-            )
-            : name_(name),
-              desc_(desc),
-              alias_(alias),
-              order_(order),
-              is_required_(required)
+         basic_app_param(const basic_app_param & rhs)
+            : name_(rhs.name_),
+              desc_(rhs.desc_),
+              value_(rhs.value_)
          {}
 
-         string_t get_name()        const {return this->name_;}
-         string_t get_description() const {return this->description_;}
-         string_t get_alias()       const {return this->alias_;}
-         int      get_order()       const {return this->order_;}
-         bool     get_is_required() const {return this->is_required_;}
+         basic_app_param & operator=(const basic_app_param & rhs)
+         {
+            if (this != &rhs)
+            {
+               this->name_ = rhs.name_;
+               this->desc_ = rhs.desc_;
+               this->value_ = rhs.value_;
+            }
 
-         virtual bool parse_value(const string_t & s) = 0;
-         virtual bool has_value() const = 0;
+            return *this;
+         }
+
+         string_t get_name()  const {return this->name_;}
+         string_t get_desc()  const {return this->desc_;}
+         string_t get_value() const {return this->value_;}
+
+         void     set_value(const string_t & s) {this->value_ = s;}
+
+         virtual string_t   get_usage_str()  const = 0;
+         virtual param_type get_param_type() const = 0;
 
          virtual ~basic_app_param()
-         {}
+         {
+         }
 
    };
 
    template<typename charT = char,
             typename traits= std::char_traits<charT> >
-   class basic_int_param : public basic_app_param<charT,traits>
+   class basic_optional_param : public basic_app_param<charT,traits>
    {
-
       private:
 
-         using base_t = basic_app_param<charT,traits>;
          using string_t = std::basic_string<charT,traits>;
+         using base_t   = basic_app_param<charT,traits>;
 
-         sk3l::core::nullable<int> value_;
+         string_t    long_option_;
+         string_t    short_option_;
+         bool        is_switch_;    // Is it boolean on/off with no value?
 
       public:
-         basic_int_param(
-            string_t name, 
-            string_t desc  = "", 
-            string_t alias = "",
-            int order      = base_t::NO_ORDER, 
-            bool required  = false
-            )
-            : base_t(name,desc,alias,order,required)
-               
-            {}
+         basic_optional_param(
+            const string_t & name,
+            const string_t & desc,
+            const string_t & lopt,
+            const string_t & sopt,
+            bool is_switch = false
+         )
+         :
+           base_t(name, desc, ""),
+           long_option_(lopt),
+           short_option_(sopt),
+           is_switch_(is_switch)
+         {}
 
-         bool parse_value(const string_t & t) override 
+         basic_optional_param(const basic_optional_param & rhs)
+         :
+            base_t(rhs.name_, rhs.desc_, rhs.value_),
+            long_option_(rhs.long_option_),
+            short_option_(rhs.short_option_),
+            is_switch_(rhs.is_switch_)
          {
-            int i = 0;
-            if (sk3l::core::text::string_util::try_parse(t, i))
+         }
+
+         basic_optional_param & operator=(const basic_optional_param & rhs)
+         {
+            if (this != &rhs)
             {
-               this->value_.set(i);
-               return true;
+               this->name_          = rhs.name_;
+               this->desc_          = rhs.desc_;
+               this->long_option_   = rhs.long_option_;
+               this->short_option_  = rhs.short_option_;
+               this->is_switch_     = rhs.is_switch_;
+               this->value_         = rhs.value_;
             }
-            else
-               return false;
+
+            return *this;
          }
 
-         bool has_value() const override
+         string_t    get_long_option()    const {return this->long_option_;}
+         string_t    get_short_option()   const {return this->short_option_;}
+         bool        get_is_switch()      const {return this->is_switch_;}
+
+         string_t get_usage_str() const override
          {
-            return this->value_.has_value();
+            return "[--" + this->name_ + "]";
          }
 
-         int get_value() 
+         param_type get_param_type() const override
          {
-            return this->value_.get();
+            return param_type::OPTIONAL;
          }
 
-         ~basic_int_param() 
+         ~basic_optional_param()
          {}
-         
+
    };
 
    template<typename charT = char,
             typename traits= std::char_traits<charT> >
-   class basic_switch_param : public basic_app_param<charT,traits>
+   class basic_positional_param : public basic_app_param<charT,traits>
    {
-
       private:
 
-         using base_t = basic_app_param<charT,traits>;
          using string_t = std::basic_string<charT,traits>;
-      
+         using base_t   = basic_app_param<charT,traits>;
+
+         int position_;
+
       public:
-         basic_switch_param(
-            string_t name, 
-            string_t desc  = "", 
-            string_t alias = "",
-            int order      = base_t::NO_ORDER, 
-            bool required  = false
-            )
-            : base_t(name,desc,alias,order,required)
-               
-            {}
 
-         bool parse_value(const string_t & t) override 
-         {
-            // no op
-            return true;
-         }
-
-         bool has_value() const override
-         {
-            return true; 
-         }
-
-         ~basic_switch_param() 
+         basic_positional_param()
          {}
-         
+
+         basic_positional_param
+         (
+            const string_t & name,
+            const string_t & desc,
+            int pos
+         )
+            : base_t(name, desc, ""),
+              position_(pos)
+         {}
+
+         basic_positional_param(const basic_positional_param & rhs)
+            : base_t(rhs.name_, rhs.desc_, rhs.value_),
+              position_(rhs.position_)
+         {
+            this->position_      = rhs.position_;
+         }
+
+         basic_positional_param & operator=(const basic_positional_param rhs)
+         {
+            if (this != &rhs)
+            {
+               this->name_          = rhs.name_;
+               this->desc_          = rhs.desc_;
+               this->position_      = rhs.position_;
+               this->value_         = rhs.value_;
+            }
+
+            return *this;
+         }
+
+         void set_position(int p)  {this->position_ = p;}
+         int  get_position() const {return this->position_;}
+
+         string_t get_usage_str() const override
+         {
+            return "<" + this->name_ + ">";
+         }
+
+         param_type get_param_type() const override
+         {
+            return param_type::POSITIONAL;
+         }
+
+         ~basic_positional_param()
+         {}
+
    };
 
+   using app_param = basic_app_param<char>;
+   using wapp_param= basic_app_param<wchar_t>;
 
-   using switch_app_param = basic_switch_param<char>;
-   using wswitch_app_param = basic_switch_param<wchar_t>;
+   using optional_param = basic_optional_param<char>;
+   using woptional_param= basic_optional_param<wchar_t>;
 
-   using int_app_param = basic_int_param<char>;
-   using wint_app_param = basic_int_param<wchar_t>;
+   using positional_param = basic_positional_param<char>;
+   using wpositional_param= basic_positional_param<wchar_t>;
 }
 }
 #endif // APP_PARAMS_H
