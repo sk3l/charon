@@ -32,6 +32,7 @@ endif()
 set(
    INCLUDES
    ${PROJECT_SOURCE_DIR}/arg_parser.h
+   ${PROJECT_SOURCE_DIR}/cmd_parser.h
    ${PROJECT_SOURCE_DIR}/sftp_server.h
    ${PROJECT_SOURCE_DIR}/sftp_connection.h
    ${PROJECT_SOURCE_DIR}/sftp_directory.h
@@ -41,6 +42,7 @@ set(
 set(
    SRCFILES
    ${PROJECT_SOURCE_DIR}/arg_parser.cpp
+   ${PROJECT_SOURCE_DIR}/cmd_parser.cpp
    ${PROJECT_SOURCE_DIR}/main.cpp
    ${PROJECT_SOURCE_DIR}/sftp_server.cpp
    ${PROJECT_SOURCE_DIR}/sftp_connection.cpp

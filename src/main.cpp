@@ -8,11 +8,12 @@
 //#include "../core/datetime/date_time.h"
 
 #include "arg_parser.h"
+#include "cmd_parser.h"
 #include "sftp_connection.h"
 #include "sftp_directory.h"
 #include "sftp_server.h"
 
-using string_util = sk3l::core::text::string_util; 
+using string_util = sk3l::core::text::string_util;
 
 int main(int argc, char ** argv)
 {
@@ -39,7 +40,7 @@ int main(int argc, char ** argv)
          if (colon != std::string::npos)
          {
             host = endpoint.substr(at, endpoint.size() - at);
-            port = string_util::string_to_numeric<int>(endpoint.substr(++colon)); 
+            port = string_util::string_to_numeric<int>(endpoint.substr(++colon));
          }
          else
          {
@@ -56,10 +57,41 @@ int main(int argc, char ** argv)
          }
          std::cout << "*--Successfully connected to remote SFTP host." << std::endl;
 
-         charon::sftp_directory dir = conn->read_directory("Code");
+         charon::cmd_parser cp;
+         for
+         (
+            charon::cmd_data cmd_to_do = cp.get_next_cmd();
+            cmd_to_do.type_ != charon::cmd_type::QUIT;
+            cmd_to_do = cp.get_next_cmd()
+         )
+         {
+            switch (cmd_to_do.type_)
+            {
+               case charon::cmd_type::HELP:
+                  std::cout << "Help is coming..." << std::endl;
+               break;
 
-         std::cout << dir; 
-      }
+               case charon::cmd_type::QUIT:
+                  std::cout << "charon is bringing you home" << std::endl;
+               break;
+
+               case charon::cmd_type::LIST:
+               {
+                  charon::sftp_directory dir = conn->read_directory(cmd_to_do.parameters_);
+                  std::cout << dir;
+               }
+               break;
+
+               case charon::cmd_type::ERROR:
+               default:
+                  std::cerr << "Unspecified error parsing SFTP command. "
+                            << "Please try again."
+                            << std::endl;
+               break;
+            }
+         }
+
+     }
       catch (ssh::SshException & sshe)
       {
          std::cerr << "Error attaching to SFTP server : " << sshe.getError() << std::endl;
@@ -70,6 +102,7 @@ int main(int argc, char ** argv)
    catch (const std::exception & e)
    {
       std::cout << "Error in charon::main: " << e.what() << std::endl;
+      exit(16);
    }
 
    return 0;
