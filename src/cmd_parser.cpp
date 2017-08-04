@@ -14,8 +14,11 @@ cmd_parser::cmd_parser()
    : cmd_map_(128, sk3l::data::adt::string_hash()) 
 {
    cmd_map_.insert("quit", cmd_type::QUIT);
+   cmd_map_.insert("q",    cmd_type::QUIT);
    cmd_map_.insert("help", cmd_type::HELP);
+   cmd_map_.insert("h",    cmd_type::HELP);
    cmd_map_.insert("list", cmd_type::LIST);
+   cmd_map_.insert("ls",   cmd_type::LIST);
 }
 
 cmd_data cmd_parser::get_next_cmd()

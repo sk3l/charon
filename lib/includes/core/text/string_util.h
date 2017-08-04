@@ -1,4 +1,4 @@
-#ifndef STRING_UTIL_H 
+#ifndef STRING_UTIL_H
 #define STRING_UTIL_H
 
 #include <algorithm>
@@ -19,7 +19,7 @@ namespace sk3l
 {
 namespace core
 {
-namespace text 
+namespace text
 {
 
 template<typename charT, typename traits=std::char_traits<charT> >
@@ -27,7 +27,7 @@ class basic_string_util
 {
    public:
       using string_t = std::basic_string<charT,traits>;
-      
+
       static string_t to_upper(const string_t & s)
       {
          string_t cpy;
@@ -54,18 +54,35 @@ class basic_string_util
          return cpy;
       }
 
+      static string_t strip_left_ws(const string_t & s)
+      {
+         auto start =
+            std::find_if_not
+            (
+               s.begin(),
+               s.end(),
+               [](const charT & c){return std::iswspace(c);}
+            );
+
+         return s.substr(start - s.begin());
+      }
+
+      static string_t strip_right_ws(const string_t & s)
+      {
+         auto start =
+            std::find_if_not
+            (
+               s.rbegin(),
+               s.rend(),
+               [](const charT & c){return std::iswspace(c);}
+            );
+
+         return s.substr(0, s.rend() - start);
+      }
+
       static string_t strip_ws(const string_t & s)
       {
-         string_t cpy;
-         std::copy_if
-         (
-            s.begin(),
-            s.end(),
-            std::back_inserter(cpy),
-            [](const charT& c){return !std::iswspace(c);}
-         );
-
-         return cpy;
+         return strip_right_ws(strip_left_ws(s));
       }
 
       using string_list_t = std::vector<string_t>;
@@ -81,15 +98,15 @@ class basic_string_util
          {
             string_t nxt_str;
             auto nxt = std::find(beg, end, delim);
- 
+
             std::copy(beg, nxt, std::back_inserter(nxt_str));
-            
-            if (nxt_str.length() > 0) 
+
+            if (nxt_str.length() > 0)
                sl.push_back(nxt_str);
             beg = nxt;
 
             if (beg != end)
-               ++beg;         
+               ++beg;
          }
 
          return sl;
@@ -109,9 +126,9 @@ class basic_string_util
       {
          T rv = {0};
 
-         if 
+         if
          (
-            (str.size() < 1) || 
+            (str.size() < 1) ||
             (str.size() > (std::numeric_limits<T>::digits10)+1)
          )
          {
@@ -151,8 +168,8 @@ class basic_string_util
             }
             rv = sum;
          }
-         
-         return rv; 
+
+         return rv;
       }
 
       template<typename T>
@@ -165,8 +182,8 @@ class basic_string_util
          do
          {
             charT c = '0' +  (t % 10);
-            str.push_back(c); 
-            t = t  / 10; 
+            str.push_back(c);
+            t = t  / 10;
          }
          while (t != 0);
 
@@ -182,7 +199,7 @@ class basic_string_util
 
          if (ss.fail())
             throw std::runtime_error("Couldn't parse object from string.");
-         return t;  
+         return t;
       }
 
       template<typename T>
@@ -192,7 +209,7 @@ class basic_string_util
          ss >> t;
          return !ss.fail();
       }
- 
+
 };
 
 using string_util = basic_string_util<char>;

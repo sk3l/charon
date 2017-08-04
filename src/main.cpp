@@ -71,13 +71,14 @@ int main(int argc, char ** argv)
                   std::cout << "Help is coming..." << std::endl;
                break;
 
-               case charon::cmd_type::QUIT:
-                  std::cout << "charon is bringing you home" << std::endl;
-               break;
-
                case charon::cmd_type::LIST:
                {
-                  charon::sftp_directory dir = conn->read_directory(cmd_to_do.parameters_);
+                  std::string path = string_util::strip_ws(cmd_to_do.parameters_);
+
+                  if (path.length() < 1)
+                     path = "./";         // default to current directory
+
+                  charon::sftp_directory dir = conn->read_directory(path);
                   std::cout << dir;
                }
                break;
@@ -91,6 +92,7 @@ int main(int argc, char ** argv)
             }
          }
 
+         std::cout << "charon is bringing you home." << std::endl;
      }
       catch (ssh::SshException & sshe)
       {
