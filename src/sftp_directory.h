@@ -44,7 +44,23 @@ namespace charon {
       sftp_directory & sd
    )
    {
-      os << "Name                       Size Perms    Owner\tGroup\n";
+      os << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
+      os << std::setfill(' ');
+
+      os << std::left
+         << std::setw(11)  << "Perms"
+         << std::setw(9)   << "User"
+         << std::setw(9)   << "Group"
+         << std::setw(6)   << "Size"
+         << std::setw(11)  << "ModDate"
+         << std::setw(8)   << "ModTime"
+         <<  "Name"
+         << std::endl;
+
+      os << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
+      os << std::setfill(' ');
+
+      //os << "Name                       Size Perms    Owner\tGroup\n";
       for (auto it = sd.begin(); it != sd.end(); ++it)
          os << *it->get();
 

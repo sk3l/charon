@@ -125,6 +125,38 @@ uint64_t    sftp_file::get_size() const
    return this->file_->size;
 }
 
+std::string sftp_file::get_size_str() const
+{
+   std::stringstream ss;
+   std::string unit;
+   
+   double dsize = (double) this->get_size();
+
+   if (this->get_size() >= (1 << 30))
+   {
+      dsize = dsize / (double)(1 << 30); 
+      unit = "G";
+   }
+   else if (this->get_size() >= (1 << 20))
+   {
+      dsize = dsize / (double)(1 << 20); 
+      unit = "M";
+   }
+   else if (this->get_size() >= (1 << 10))
+   {
+      dsize = dsize / (double)(1 << 10); 
+      unit = "K";
+   }
+   else
+   {
+      dsize = (double) this->get_size();
+   }
+   
+   ss << std::setprecision(3) << std::right << dsize << unit;
+
+   return ss.str();
+}
+
 uint32_t    sftp_file::get_uid() const
 {
    return this->file_->uid;
