@@ -61,7 +61,7 @@ protected:
    static const count_t TICKS_PER_SECOND  = 1000;
    static const count_t TICKS_PER_MINUTE  = MINUTE_SECONDS  * TICKS_PER_SECOND;
    static const count_t TICKS_PER_HOUR    = HOUR_MINUTES    * TICKS_PER_MINUTE;
-   static const count_t TICKS_PER_DAY     = DAY_HOURS       * TICKS_PER_HOUR; 
+   static const count_t TICKS_PER_DAY     = DAY_HOURS       * TICKS_PER_HOUR;
    static const count_t TICKS_PER_YEAR    = YEAR_DAYS       * TICKS_PER_DAY;
    static const count_t TICKS_PER_LYEAR   = LYEAR_DAYS      * TICKS_PER_DAY;
 
@@ -71,7 +71,7 @@ public:
    date_time();
    date_time(const date_time & dt);
    explicit date_time(const sk3l::core::datetime::long_clock::time_point & tp);
-   
+
    date_time & operator=(const date_time & rhs);
 
    // static helper conversion methods
@@ -162,8 +162,8 @@ public:
    ) const
    {
       std::basic_stringstream<charT,traitsT> result;
-     
-      bool gotDelim = false; 
+
+      bool gotDelim = false;
       for (auto it = format.begin(); it != format.end(); ++it)
       {
          if (!gotDelim)
@@ -180,28 +180,57 @@ public:
             case 'F':
                result << std::setfill(get_fill_char<charT>()) << std::setw(4)
                       << this->get_year() << "-"
-                      << std::setfill(get_fill_char<charT>()) << std::setw(2) 
+                      << std::setfill(get_fill_char<charT>()) << std::setw(2)
                       << this->get_month() << "-"
-                      << std::setfill(get_fill_char<charT>()) << std::setw(2) 
+                      << std::setfill(get_fill_char<charT>()) << std::setw(2)
+                      << this->get_day();
+            break;
+
+            case 'Y':
+               result << this->get_year();
+            break;
+
+            case 'm':
+               result << std::setfill(get_fill_char<charT>()) << std::setw(2)
+                      << this->get_month();
+            break;
+
+            case 'd':
+               result << std::setfill(get_fill_char<charT>()) << std::setw(2)
                       << this->get_day();
             break;
 
             case 'T':
                result << std::setfill(get_fill_char<charT>())  << std::setw(2)
-                      << this->get_hours()   << ":" 
+                      << this->get_hours()   << ":"
                       << std::setfill(get_fill_char<charT>())  << std::setw(2)
                       << this->get_minutes() << ":"
                       << std::setfill(get_fill_char<charT>())  << std::setw(2)
                       << this->get_seconds() << "."            << std::setw(3)
                       << this->get_milliseconds();
             break;
-         }
-         gotDelim = false; 
-      } 
+
+            case 'H':
+               result << std::setfill(get_fill_char<charT>())  << std::setw(2)
+                      << this->get_hours();
+            break;
+
+            case 'M':
+               result << std::setfill(get_fill_char<charT>())  << std::setw(2)
+                      << this->get_minutes();
+            break;
+
+            case 'S':
+               result << std::setfill(get_fill_char<charT>())  << std::setw(2)
+                      << this->get_seconds();
+            break;
+        }
+         gotDelim = false;
+      }
 
       return result.str();
-   }   
- 
+   }
+
    template<typename charT=char, typename traitsT=std::char_traits<charT> >
    std::basic_string<charT,traitsT> format_basic_string(const charT * fmt) const
    {
@@ -222,13 +251,13 @@ public:
 
    std::string format_iso_date_str() const
    {
-      return this->format_basic_string<char>("%F");   
-   } 
+      return this->format_basic_string<char>("%F");
+   }
 
    std::string format_iso_time_str() const
    {
-      return this->format_basic_string<char>("%T"); 
-   } 
+      return this->format_basic_string<char>("%T");
+   }
 
    //
    // wstring formatting convenience methods
@@ -245,17 +274,17 @@ public:
    std::wstring format_iso_date_wstr() const
    {
       return this->format_basic_string<wchar_t>(L"%F");
-   } 
+   }
 
    std::wstring format_iso_time_wstr() const
    {
-      return this->format_basic_string<wchar_t>(L"%T"); 
-   } 
+      return this->format_basic_string<wchar_t>(L"%T");
+   }
 
    template<typename charT=char, typename traitsT=std::char_traits<charT> >
    static date_time parse
    (
-      const std::basic_string<charT> & dt, 
+      const std::basic_string<charT> & dt,
       const std::basic_string<charT> & format
    )
    {
@@ -270,7 +299,7 @@ public:
       std::uint32_t year, month, day;
       std::uint32_t hours, mins, secs, ms;
 
-      bool gotDelim = false; 
+      bool gotDelim = false;
       for (auto it = format.begin(); it != format.end(); ++it)
       {
          if (!gotDelim)
@@ -303,26 +332,26 @@ public:
                      string_t("Time string '") + tmp +
                      string_t("' does not match format '") + format + "'."
                   );
- 
+
                hours= string_util::string_to_numeric<num_t>(tmp.substr(0, 2));
                mins = string_util::string_to_numeric<num_t>(tmp.substr(3, 2));
                secs = string_util::string_to_numeric<num_t>(tmp.substr(6, 2));
                ms   = string_util::string_to_numeric<num_t>(tmp.substr(9, 3));
 
                tmp = tmp.substr(0, 12);
-                       
+
             break;
          }
-         gotDelim = false; 
+         gotDelim = false;
       }
 
       rv.set_date_time_parts(year, month, day, hours, mins, secs, ms);
 
-      return rv; 
+      return rv;
    }
 };
 
-template<typename charT=char, typename traitsT=std::char_traits<charT> > 
+template<typename charT=char, typename traitsT=std::char_traits<charT> >
 std::basic_istream<charT,traitsT> & operator>>
 (
    std::basic_istream<charT,traitsT> & is,
@@ -330,17 +359,17 @@ std::basic_istream<charT,traitsT> & operator>>
 )
 {
    charT str[date_time::ISO_STR_LEN+1];
-   is.get(str, date_time::ISO_STR_LEN+1); 
-   dt = 
+   is.get(str, date_time::ISO_STR_LEN+1);
+   dt =
       date_time::parse
       (
-         std::basic_string<charT,traitsT>(str), 
+         std::basic_string<charT,traitsT>(str),
          std::basic_string<charT,traitsT>("%FT%T")
       );
    return is;
 }
- 
-template<typename charT=char, typename charTraits=std::char_traits<charT> > 
+
+template<typename charT=char, typename charTraits=std::char_traits<charT> >
 std::basic_ostream<charT,charTraits> & operator<<
 (
    std::basic_ostream<charT,charTraits> & os,
@@ -349,7 +378,7 @@ std::basic_ostream<charT,charTraits> & operator<<
 {
    os << dt.format_basic_string<charT,charTraits>("%FT%T");
    return os;
-}  
+}
 
 }
 }

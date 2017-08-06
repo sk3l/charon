@@ -70,23 +70,12 @@ namespace charon {
       if (mode & S_IWOTH) perms += "w"; else perms += "-";
       if (mode & S_IXOTH) perms += "x"; else perms += "-";
 
-
-      /*
-         os << sd.get_name()        << " "
-            << sd.get_size()        << " "
-            << sd.get_permissions() << " "
-            << sd.get_owner()       << " "
-            << sd.get_uid()         << " "
-            << sd.get_group()       << " "
-            << sd.get_gid()         << " "
-            << std::endl;
-      */
       os << std::setw(11) << perms
          << std::setw(9)  << sd.get_owner()
          << std::setw(9)  << sd.get_group()
          << std::setw(6)  << sd.get_size_str()
-         << std::setw(11) << " "
-         << std::setw(8)  << " "
+         << std::setw(9)  << sd.get_mod_time().format_str("%Y%m%d") 
+         << std::setw(8)  << sd.get_mod_time().format_str("%H:%S") 
          << sd.get_name() << std::endl;
 
       return os;

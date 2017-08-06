@@ -52,7 +52,7 @@ namespace charon {
          << std::setw(9)   << "User"
          << std::setw(9)   << "Group"
          << std::setw(6)   << "Size"
-         << std::setw(11)  << "ModDate"
+         << std::setw(9)  << "ModDate"
          << std::setw(8)   << "ModTime"
          <<  "Name"
          << std::endl;
