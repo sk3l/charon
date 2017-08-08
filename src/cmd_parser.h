@@ -14,7 +14,9 @@ namespace charon {
       UNKNOWN  = -1,
       QUIT     = 0,
       HELP     = 1,
-      LIST     = 2
+      LIST     = 2,
+      PWD      = 3,
+      CD       = 4
    };
   
    struct cmd_data

@@ -83,6 +83,23 @@ int main(int argc, char ** argv)
                }
                break;
 
+               case charon::PWD:
+                  conn->print_working_directory();
+               break;
+
+               case charon::CD:
+               {
+                  std::string path = string_util::strip_ws(cmd_to_do.parameters_);
+
+                  if (path.length() < 1)
+                     path = "./";         // default to current directory
+
+                  conn->change_directory(path);
+                  std::cout << "Changed directory to " << path << std::endl;
+               }
+               break;
+
+
                case charon::cmd_type::ERROR:
                default:
                   std::cerr << "Unspecified error parsing SFTP command. "

@@ -20,7 +20,14 @@ sftp_connection::sftp_connection(::ssh_session sess)
 
    int rc = sftp_init(tmp.get());
    if (rc == SSH_OK)
+   {
+      char * workingDir = sftp_canonicalize_path(tmp.get(), "./");
+      if (workingDir == nullptr)
+         throw std::runtime_error("Failed to initialize SFTP working directory.");
+      this->cwd_ = workingDir;
+
       this->sftp_sess_ = tmp.release();
+   }
    else
       throw std::runtime_error("Failed to initialize sftp_connection.");
 }
@@ -31,9 +38,32 @@ sftp_connection::~sftp_connection()
    this->sftp_sess_ = nullptr;
 }
 
+std::string sftp_connection::canonicalize(const std::string & path)
+{
+   return sftp_canonicalize_path(this->sftp_sess_, path.c_str());
+}
+
+void sftp_connection::change_directory(const std::string & dir)
+{
+   // TO DO : need path validation logic
+   this->cwd_ = dir;
+}
+
+void sftp_connection::print_working_directory() const
+{
+   std::cout << "Current working director : " << this->cwd_ << std::endl;
+}
+
 sftp_directory sftp_connection::read_directory(const std::string & path)
 {
-   return sftp_directory(this->sftp_sess_, path);
+   std::string realPath;
+   // TO DO : need path validation logic
+   if ((path.length() > 0) && (path[0] != '/'))
+      realPath = this->cwd_ + "/" + path;
+   else
+      realPath = path;
+
+   return sftp_directory(this->sftp_sess_, realPath);
 }
 
 }
