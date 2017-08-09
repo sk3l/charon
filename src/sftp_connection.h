@@ -7,8 +7,11 @@
 #include <libssh/sftp.h>
 
 #include "sftp_directory.h"
+#include "sftp_file.h"
 
 namespace charon {
+
+   using sftp_dir_ptr = std::shared_ptr<sftp_directory>;
 
    class sftp_connection
    {
@@ -31,6 +34,7 @@ namespace charon {
          void print_working_directory() const;
 
          sftp_directory read_directory(const std::string & path);
+         sftp_file      stat(const std::string & path);
    };
 }
 
