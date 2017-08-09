@@ -34,6 +34,7 @@ namespace charon {
          std::string get_name() const;
          std::string get_long_name() const;
          uint32_t    get_flags() const;
+         uint8_t     get_type() const;
          uint64_t    get_size() const;
          std::string get_size_str() const;
          uint32_t    get_uid() const;
@@ -44,6 +45,9 @@ namespace charon {
          date_time   get_access_time() const;
          date_time   get_create_time() const;
          date_time   get_mod_time() const;
+
+         bool        is_directory() const;
+         bool        is_file() const;
 
          ~sftp_file();
    };

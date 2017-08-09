@@ -19,13 +19,28 @@ sftp_file::sftp_file()
 sftp_file::sftp_file(const sftp_attributes & attrs)
 : file_(new struct sftp_attributes_struct())
 {
-   this->file_->name                = strdup(attrs->name);
-   this->file_->longname            = strdup(attrs->longname);
+   this->file_->name                = nullptr;
+   if (attrs->name != nullptr)
+      this->file_->name             = strdup(attrs->name);
+
+   this->file_->longname            = nullptr;
+   if (attrs->longname != nullptr)
+      this->file_->longname         = strdup(attrs->longname);
+
+   this->file_->flags               = attrs->flags;
+   this->file_->type                = attrs->type;
    this->file_->size                = attrs->size;
    this->file_->uid                 = attrs->uid;
    this->file_->gid                 = attrs->gid;
-   this->file_->owner               = strdup(attrs->owner);
-   this->file_->group               = strdup(attrs->group);
+
+   this->file_->owner               = nullptr;
+   if (attrs->owner != nullptr)
+      this->file_->owner            = strdup(attrs->owner);
+
+   this->file_->group               = nullptr;
+   if (attrs->group != nullptr)
+      this->file_->group            = strdup(attrs->group);
+
    this->file_->permissions         = attrs->permissions;
    this->file_->atime64             = attrs->atime64;
    this->file_->atime               = attrs->atime;
@@ -48,15 +63,27 @@ sftp_file::sftp_file(sftp_attributes && attrs)
 sftp_file::sftp_file(const sftp_file & rhs)
 : file_(new struct sftp_attributes_struct())
 {
-   this->file_->name                = strdup(rhs.file_->name);
-   this->file_->longname            = strdup(rhs.file_->longname);
+   this->file_->name                = nullptr;
+   if (rhs.file_->name != nullptr)
+      this->file_->name             = strdup(rhs.file_->name);
 
+   this->file_->longname            = nullptr;
+   if (rhs.file_->longname != nullptr)
+      this->file_->longname         = strdup(rhs.file_->longname);
+
+   this->file_->flags               = rhs.file_->flags;
+   this->file_->type                = rhs.file_->type;
    this->file_->size                = rhs.file_->size;
    this->file_->uid                 = rhs.file_->uid;
    this->file_->gid                 = rhs.file_->gid;
 
-   this->file_->owner               = strdup(rhs.file_->owner);
-   this->file_->group               = strdup(rhs.file_->group);
+   this->file_->owner               = nullptr;
+   if (rhs.file_->owner != nullptr)
+      this->file_->owner            = strdup(rhs.file_->owner);
+
+   this->file_->group               = nullptr;
+   if (rhs.file_->group != nullptr)
+      this->file_->group            = strdup(rhs.file_->group);
 
    this->file_->permissions         = rhs.file_->permissions;
    this->file_->atime64             = rhs.file_->atime64;
@@ -76,19 +103,31 @@ sftp_file & sftp_file::operator=(const sftp_file & rhs)
    if (this != &rhs)
    {
       free(this->file_->name);
-      this->file_->name                = strdup(rhs.file_->name);
+      this->file_->name                = nullptr;
+      if (rhs.file_->name != nullptr)
+         this->file_->name             = strdup(rhs.file_->name);
+
       free(this->file_->longname);
-      this->file_->longname            = strdup(rhs.file_->longname);
-   
+      this->file_->longname            = nullptr;
+      if (rhs.file_->longname != nullptr)
+         this->file_->longname         = strdup(rhs.file_->longname);
+
+      this->file_->flags               = rhs.file_->flags;
+      this->file_->type                = rhs.file_->type;
       this->file_->size                = rhs.file_->size;
       this->file_->uid                 = rhs.file_->uid;
       this->file_->gid                 = rhs.file_->gid;
-   
+
       free(this->file_->owner);
-      this->file_->owner               = strdup(rhs.file_->owner);
+      this->file_->owner               = nullptr;
+      if (rhs.file_->owner != nullptr)
+         this->file_->owner            = strdup(rhs.file_->owner);
+
       free(this->file_->group);
-      this->file_->group               = strdup(rhs.file_->group);
-   
+      this->file_->group               = nullptr;
+      if (rhs.file_->group != nullptr)
+         this->file_->group            = strdup(rhs.file_->group);
+
       this->file_->permissions         = rhs.file_->permissions;
       this->file_->atime64             = rhs.file_->atime64;
       this->file_->atime               = rhs.file_->atime;
@@ -98,7 +137,7 @@ sftp_file & sftp_file::operator=(const sftp_file & rhs)
       this->file_->mtime64             = rhs.file_->mtime64;
       this->file_->mtime               = rhs.file_->mtime;
       this->file_->mtime_nseconds      = rhs.file_->mtime_nseconds;
-   
+
       this->file_->extended_count      = rhs.file_->extended_count;
    }
 
@@ -120,6 +159,11 @@ uint32_t    sftp_file::get_flags() const
    return this->file_->flags;
 }
 
+uint8_t    sftp_file::get_type() const
+{
+   return this->file_->type;
+}
+
 uint64_t    sftp_file::get_size() const
 {
    return this->file_->size;
@@ -129,29 +173,29 @@ std::string sftp_file::get_size_str() const
 {
    std::stringstream ss;
    std::string unit;
-   
+
    double dsize = (double) this->get_size();
 
    if (this->get_size() >= (1 << 30))
    {
-      dsize = dsize / (double)(1 << 30); 
+      dsize = dsize / (double)(1 << 30);
       unit = "G";
    }
    else if (this->get_size() >= (1 << 20))
    {
-      dsize = dsize / (double)(1 << 20); 
+      dsize = dsize / (double)(1 << 20);
       unit = "M";
    }
    else if (this->get_size() >= (1 << 10))
    {
-      dsize = dsize / (double)(1 << 10); 
+      dsize = dsize / (double)(1 << 10);
       unit = "K";
    }
    else
    {
       dsize = (double) this->get_size();
    }
-   
+
    ss << std::setprecision(3) << std::right << dsize << unit;
 
    return ss.str();
@@ -188,7 +232,7 @@ date_time   sftp_file::get_access_time() const
       date_time(
          sk3l::core::datetime::long_clock::from_time_t
          (
-            std::time_t(this->file_->atime) 
+            std::time_t(this->file_->atime)
          )
       );
 }
@@ -199,7 +243,7 @@ date_time   sftp_file::get_create_time() const
       date_time(
          sk3l::core::datetime::long_clock::from_time_t
          (
-            std::time_t(this->file_->createtime) 
+            std::time_t(this->file_->createtime)
          )
       );
 }
@@ -210,9 +254,20 @@ date_time   sftp_file::get_mod_time() const
       date_time(
          sk3l::core::datetime::long_clock::from_time_t
          (
-            std::time_t(this->file_->mtime) 
+            std::time_t(this->file_->mtime)
          )
       );
+}
+
+bool sftp_file::is_directory() const
+{
+   return (this->get_type() & SSH_FILEXFER_TYPE_DIRECTORY) > 0;
+}
+
+bool sftp_file::is_file() const
+{
+
+   return (this->get_type() & SSH_FILEXFER_TYPE_REGULAR) > 0;
 }
 
 sftp_file::~sftp_file()
