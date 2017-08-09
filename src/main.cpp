@@ -65,47 +65,54 @@ int main(int argc, char ** argv)
             cmd_to_do = cp.get_next_cmd()
          )
          {
-            switch (cmd_to_do.type_)
+            try
             {
-               case charon::cmd_type::HELP:
-                  std::cout << "Help is coming..." << std::endl;
-               break;
-
-               case charon::cmd_type::LIST:
+               switch (cmd_to_do.type_)
                {
-                  std::string path = string_util::strip_ws(cmd_to_do.parameters_);
+                  case charon::cmd_type::HELP:
+                     std::cout << "Help is coming..." << std::endl;
+                  break;
 
-                  if (path.length() < 1)
-                     path = "./";         // default to current directory
+                  case charon::cmd_type::LIST:
+                  {
+                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
 
-                  charon::sftp_directory dir = conn->read_directory(path);
-                  std::cout << dir;
+                     if (path.length() < 1)
+                        path = "./";         // default to current directory
+
+                     charon::sftp_directory dir = conn->read_directory(path);
+                     std::cout << dir;
+                  }
+                  break;
+
+                  case charon::PWD:
+                     conn->print_working_directory();
+                  break;
+
+                  case charon::CD:
+                  {
+                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
+
+                     if (path.length() < 1)
+                        path = "./";         // default to current directory
+
+                     conn->change_directory(path);
+                     std::cout << "Changed directory to " << path << std::endl;
+                  }
+                  break;
+
+
+                  case charon::cmd_type::ERROR:
+                  default:
+                     std::cerr << "Unspecified error parsing SFTP command. "
+                               << "Please try again."
+                               << std::endl;
+                  break;
                }
-               break;
-
-               case charon::PWD:
-                  conn->print_working_directory();
-               break;
-
-               case charon::CD:
-               {
-                  std::string path = string_util::strip_ws(cmd_to_do.parameters_);
-
-                  if (path.length() < 1)
-                     path = "./";         // default to current directory
-
-                  conn->change_directory(path);
-                  std::cout << "Changed directory to " << path << std::endl;
-               }
-               break;
-
-
-               case charon::cmd_type::ERROR:
-               default:
-                  std::cerr << "Unspecified error parsing SFTP command. "
-                            << "Please try again."
-                            << std::endl;
-               break;
+            }
+            catch (const std::exception & err)
+            {
+               std::cerr << err.what() << std::endl;
             }
          }
 
