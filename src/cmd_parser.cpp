@@ -21,6 +21,7 @@ cmd_parser::cmd_parser()
    cmd_map_.insert("ls",   cmd_type::LIST);
    cmd_map_.insert("pwd",  cmd_type::PWD);
    cmd_map_.insert("cd",   cmd_type::CD);
+   cmd_map_.insert("stat", cmd_type::STAT);
 }
 
 cmd_data cmd_parser::get_next_cmd()

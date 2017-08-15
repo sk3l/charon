@@ -16,7 +16,8 @@ namespace charon {
       HELP     = 1,
       LIST     = 2,
       PWD      = 3,
-      CD       = 4
+      CD       = 4,
+      STAT     = 5
    };
   
    struct cmd_data

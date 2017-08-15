@@ -105,6 +105,9 @@ sftp_file sftp_connection::stat(const std::string & path)
       throw std::logic_error(err);
    }
 
+   if ((attrib->name == nullptr) || (strlen(attrib->name) < 1))
+      attrib->name = const_cast<char*>(path.c_str());
+
    return sftp_file(attrib);
 }
 

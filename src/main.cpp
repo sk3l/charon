@@ -101,6 +101,20 @@ int main(int argc, char ** argv)
                   }
                   break;
 
+                  case charon::STAT:
+                  {
+                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
+
+                     if (path.length() < 1)
+                     {
+                        std::cerr << "Must provide argument to stat (e.g. stat <foo>)";
+                        continue;
+                     }
+
+                     charon::sftp_file f = conn->stat(path);
+                     f.print_stat();
+                  }
+                  break;
 
                   case charon::cmd_type::ERROR:
                   default:

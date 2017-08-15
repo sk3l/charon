@@ -270,6 +270,20 @@ bool sftp_file::is_file() const
    return (this->get_type() & SSH_FILEXFER_TYPE_REGULAR) > 0;
 }
 
+void sftp_file::print_stat() const
+{
+   std::cout << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
+   std::cout << std::setfill(' ');
+   std::cout << std::setw(43)     << std::right    << "Stats"  << std::endl;
+   std::cout << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
+   std::cout << std::setfill(' ');
+
+   std::cout << std::right << std::setw(7)   << "File:" << " "
+             << std::left  << std::setw(32)  << this->file_->name;
+   std::cout << std::right << std::setw(7)   << "Size:" << " "
+             << std::left  << std::setw(32)  <<this->file_->size<< std::endl;
+}
+
 sftp_file::~sftp_file()
 {
    sftp_attributes_free(this->file_);

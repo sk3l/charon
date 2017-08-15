@@ -49,6 +49,8 @@ namespace charon {
          bool        is_directory() const;
          bool        is_file() const;
 
+         void        print_stat() const;
+
          ~sftp_file();
    };
 
