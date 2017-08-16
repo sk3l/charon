@@ -35,6 +35,7 @@ namespace charon {
          std::string get_long_name() const;
          uint32_t    get_flags() const;
          uint8_t     get_type() const;
+         std::string get_type_str() const;
          uint64_t    get_size() const;
          std::string get_size_str() const;
          uint32_t    get_uid() const;
@@ -42,6 +43,7 @@ namespace charon {
          std::string get_owner() const;
          std::string get_group() const;
          uint32_t    get_permissions() const;
+         std::string get_permissions_str() const;
          date_time   get_access_time() const;
          date_time   get_create_time() const;
          date_time   get_mod_time() const;
@@ -62,21 +64,7 @@ namespace charon {
       sftp_file & sd
    )
    {
-      uint32_t mode = sd.get_permissions();
-      std::basic_string<charT,traits> perms;
-
-      if (mode & S_IFDIR) perms += "d"; else perms += "-";
-      if (mode & S_IRUSR) perms += "r"; else perms += "-";
-      if (mode & S_IWUSR) perms += "w"; else perms += "-";
-      if (mode & S_IXUSR) perms += "x"; else perms += "-";
-      if (mode & S_IRGRP) perms += "r"; else perms += "-";
-      if (mode & S_IWGRP) perms += "w"; else perms += "-";
-      if (mode & S_IXGRP) perms += "x"; else perms += "-";
-      if (mode & S_IROTH) perms += "r"; else perms += "-";
-      if (mode & S_IWOTH) perms += "w"; else perms += "-";
-      if (mode & S_IXOTH) perms += "x"; else perms += "-";
-
-      os << std::setw(11) << perms
+      os << std::setw(11) << sd.get_permissions_str() 
          << std::setw(9)  << sd.get_owner()
          << std::setw(9)  << sd.get_group()
          << std::setw(6)  << sd.get_size_str()

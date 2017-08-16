@@ -164,6 +164,23 @@ uint8_t    sftp_file::get_type() const
    return this->file_->type;
 }
 
+std::string sftp_file::get_type_str() const
+{
+   std::string type = "unknown";
+   uint8_t tbyte = this->get_type();
+
+   if (tbyte & SSH_FILEXFER_TYPE_REGULAR)
+      type = "file";
+   else if (tbyte & SSH_FILEXFER_TYPE_DIRECTORY)
+      type = "directory";
+   else if (tbyte & SSH_FILEXFER_TYPE_SYMLINK)
+      type = "symlink";
+   else if (tbyte & SSH_FILEXFER_TYPE_SPECIAL)
+      type = "special";
+
+   return type;
+}
+
 uint64_t    sftp_file::get_size() const
 {
    return this->file_->size;
@@ -226,6 +243,25 @@ uint32_t    sftp_file::get_permissions() const
    return this->file_->permissions;
 }
 
+std::string sftp_file::get_permissions_str() const
+{
+   uint32_t mode = this->get_permissions();
+   std::string perms;
+
+   if (mode & S_IFDIR) perms += "d"; else perms += "-";
+   if (mode & S_IRUSR) perms += "r"; else perms += "-";
+   if (mode & S_IWUSR) perms += "w"; else perms += "-";
+   if (mode & S_IXUSR) perms += "x"; else perms += "-";
+   if (mode & S_IRGRP) perms += "r"; else perms += "-";
+   if (mode & S_IWGRP) perms += "w"; else perms += "-";
+   if (mode & S_IXGRP) perms += "x"; else perms += "-";
+   if (mode & S_IROTH) perms += "r"; else perms += "-";
+   if (mode & S_IWOTH) perms += "w"; else perms += "-";
+   if (mode & S_IXOTH) perms += "x"; else perms += "-";
+
+   return perms;
+}
+
 date_time   sftp_file::get_access_time() const
 {
    return
@@ -274,14 +310,36 @@ void sftp_file::print_stat() const
 {
    std::cout << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
    std::cout << std::setfill(' ');
-   std::cout << std::setw(43)     << std::right    << "Stats"  << std::endl;
+   std::cout << std::setw(43)     << std::right    << "Stat"  << std::endl;
    std::cout << std::setfill('=') << std::setw(80) << "=" <<  std::endl;
    std::cout << std::setfill(' ');
 
-   std::cout << std::right << std::setw(7)   << "File:" << " "
+   std::cout << std::right << std::setw(7)   << "Name:" << " "
              << std::left  << std::setw(32)  << this->file_->name;
    std::cout << std::right << std::setw(7)   << "Size:" << " "
-             << std::left  << std::setw(32)  <<this->file_->size<< std::endl;
+             << std::left  << std::setw(32)  <<this->file_->size     << std::endl;
+
+   std::cout << std::right << std::setw(7)   << "Access:" << " "
+             << std::left  << std::setw(32)  << this->get_permissions_str();
+   std::cout << std::right << std::setw(7)   << "Type:" << " "
+             << std::left  << std::setw(32)  <<this->get_type_str()  << std::endl;
+
+   std::cout << std::right << std::setw(7)   << "Owner:" << " "
+             << std::left  << std::setw(32)  << this->get_uid();
+   std::cout << std::right << std::setw(7)   << "Group:" << " "
+             << std::left  << std::setw(32)  <<this->get_gid()  << std::endl;
+
+   std::cout << std::right << std::setw(7)   << "AccsTm:" << " "
+             << std::left  << std::setw(10)  
+             << this->get_access_time().format_str("%Y-%m-%d")  
+             << std::left  << std::setw(22)  
+             << this->get_access_time().format_str("T%H:%M:%S"); 
+   std::cout << std::right << std::setw(7)   << "ModTm:" << " "
+             << std::left  << std::setw(10)  
+             << this->get_mod_time().format_str("%Y-%m-%d")  
+             << std::left  << std::setw(22)  
+             << this->get_mod_time().format_str("T%H:%M:%S") 
+             << std::endl;
 }
 
 sftp_file::~sftp_file()
