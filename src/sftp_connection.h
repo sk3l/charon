@@ -11,22 +11,30 @@
 
 namespace charon {
 
+   class sftp_connection;
+   using sftp_conn_ptr = std::shared_ptr<sftp_connection>;
    using sftp_dir_ptr = std::shared_ptr<sftp_directory>;
 
    class sftp_connection
    {
+      friend class sftp_server;
+
       private :
          ::ssh_session     ssh_sess_;
          ::sftp_session    sftp_sess_;
-
          std::string       cwd_;
-      public :
 
-         sftp_connection(::ssh_session sess);
-         ~sftp_connection();
+         bool authenticate_server();
+         bool authenticate_user(const std::string & user);
+
+         sftp_connection(const std::string & user, const std::string & host, short port);
+
+      public :
 
          sftp_connection(const sftp_connection & rhs) = delete;
          sftp_connection & operator=(const sftp_connection & rhs) = delete;
+
+         ~sftp_connection();
 
          std::string canonicalize(const std::string & path);
 
