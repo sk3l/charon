@@ -257,11 +257,11 @@ sftp_connection::sftp_connection(const std::string & user, const std::string & h
 
 sftp_connection::~sftp_connection()
 {
-   ssh_free(this->ssh_sess_);
-   this->ssh_sess_ = nullptr;
-
    sftp_free(this->sftp_sess_);
    this->sftp_sess_ = nullptr;
+
+   ssh_free(this->ssh_sess_);
+   this->ssh_sess_ = nullptr;
 }
 
 std::string sftp_connection::canonicalize(const std::string & path)
