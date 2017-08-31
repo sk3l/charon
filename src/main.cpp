@@ -75,9 +75,10 @@ int main(int argc, char ** argv)
 
                   case charon::cmd_type::LIST:
                   {
-                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
-
-                     if (path.length() < 1)
+                     std::string path;
+                     if (cmd_to_do.parameters_.size() > 0)
+                        path = string_util::strip_ws(cmd_to_do.parameters_[0]);
+                     else
                         path = "./";         // default to current directory
 
                      charon::sftp_directory dir = conn->read_directory(path);
@@ -91,9 +92,10 @@ int main(int argc, char ** argv)
 
                   case charon::CD:
                   {
-                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
-
-                     if (path.length() < 1)
+                     std::string path;
+                     if (cmd_to_do.parameters_.size() > 0)
+                        path = string_util::strip_ws(cmd_to_do.parameters_[0]);
+                     else
                         path = "./";         // default to current directory
 
                      conn->change_directory(path);
@@ -103,9 +105,10 @@ int main(int argc, char ** argv)
 
                   case charon::STAT:
                   {
-                     std::string path = string_util::strip_ws(cmd_to_do.parameters_);
-
-                     if (path.length() < 1)
+                     std::string path;
+                     if (cmd_to_do.parameters_.size() > 0)
+                        path = string_util::strip_ws(cmd_to_do.parameters_[0]);
+                     else
                      {
                         std::cerr << "Must provide argument to stat (e.g. stat <foo>)";
                         continue;
@@ -113,6 +116,12 @@ int main(int argc, char ** argv)
 
                      charon::sftp_file f = conn->stat(path);
                      f.print_stat();
+                  }
+                  break;
+
+                  case charon::cmd_type::PUT:
+                  {
+
                   }
                   break;
 

@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "data/adt/hash_map_o.h"
 
@@ -17,13 +18,16 @@ namespace charon {
       LIST     = 2,
       PWD      = 3,
       CD       = 4,
-      STAT     = 5
+      STAT     = 5,
+      PUT      = 6
    };
-  
+
+   using cmd_param_list = std::vector<std::string>;
+
    struct cmd_data
    {
-      cmd_type    type_;
-      std::string parameters_;
+      cmd_type       type_;
+      cmd_param_list parameters_;
    };
 
    class cmd_parser 
