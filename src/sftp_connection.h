@@ -36,13 +36,16 @@ namespace charon {
 
          ~sftp_connection();
 
-         std::string canonicalize(const std::string & path);
+         std::string    canonicalize(const std::string & path);
 
-         void change_directory(const std::string & path);
-         void print_working_directory() const;
+         void           change_directory(const std::string & path);
+         void           print_working_directory() const;
 
          sftp_directory read_directory(const std::string & path);
+
          sftp_file      stat(const std::string & path);
+         void           put(const std::string & lpath, const std::string & rpath = "");
+         void           get(const std::string & rpath, const std::string & lpath = "");
    };
 }
 

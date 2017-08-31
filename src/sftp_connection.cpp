@@ -1,11 +1,13 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <fcntl.h>
+#include <fstream>
 #include <sstream>
+#include <sys/stat.h>
 #include <string.h>
 
 #include <libssh/sftp.h>
-
 #include <libssh/libsshpp.hpp>
 
 #include "sftp_connection.h"
@@ -334,6 +336,59 @@ sftp_file sftp_connection::stat(const std::string & path)
       attrib->name = const_cast<char*>(path.c_str());
 
    return sftp_file(attrib);
+}
+
+void sftp_connection::put(const std::string & lpath, const std::string & rpath)
+{
+
+   std::fstream local_file(lpath);
+   if (!local_file)
+      throw std::logic_error("Encountered error in put(): couldn't open file at local path '" + lpath + "'");
+
+   ::sftp_file remote_file = 
+      sftp_open
+      (
+         this->sftp_sess_, 
+         lpath.c_str(), 
+         O_CREAT | O_TRUNC,   // TO DO : make configurable
+         S_IRWXU              // TO DO : make configurable 
+      ); 
+
+   if (remote_file == nullptr)
+      throw std::logic_error("Encountered error in put(): couldn't open file at remote path '" + rpath + "'");
+
+   // TO DO : configurable read buffer size
+   const int BUFF_SIZE = 4 * (1 << 20);
+   std::unique_ptr<char> buffer(new char[BUFF_SIZE]);
+   try
+   {
+      int write_cnt = 0;
+      do 
+      {
+         std::streamsize read_cnt = local_file.readsome(buffer.get(), BUFF_SIZE);
+         if (!local_file)
+            break;
+
+         write_cnt = sftp_write(remote_file, buffer.get(), read_cnt);
+         if (write_cnt != read_cnt)
+            throw std::logic_error("Encountered error int put(): I/O error writing remote file '" + rpath + "'");
+      }
+      while (local_file);
+   
+      if (!local_file.eof())
+         throw std::logic_error("Encountered error int put(): I/O error reading local file '" + lpath + "'");
+   }
+   catch (...)
+   {
+      sftp_close(remote_file);
+      throw;
+   }
+
+}
+
+void sftp_connection::get(const std::string & rpath, const std::string & lpath)
+{
+
 }
 
 }
