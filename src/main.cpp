@@ -110,7 +110,8 @@ int main(int argc, char ** argv)
                         path = string_util::strip_ws(cmd_to_do.parameters_[0]);
                      else
                      {
-                        std::cerr << "Must provide argument to stat (e.g. stat <foo>)";
+                        std::cerr << "Must provide argument to stat (e.g. stat <foo>)"
+                                  << std::endl;
                         continue;
                      }
 
@@ -121,7 +122,22 @@ int main(int argc, char ** argv)
 
                   case charon::cmd_type::PUT:
                   {
+                     size_t argcnt = cmd_to_do.parameters_.size();
 
+                     if (argcnt < 1 || argcnt > 2)
+                     {
+                        std::cerr << "Must provide argument to put (e.g. put <src> [<dest>])"
+                                  << std::endl;
+                        continue;
+                     }
+
+                     std::string src = string_util::strip_ws(cmd_to_do.parameters_[0]);
+                     std::string dest = src;
+
+                     if (argcnt == 2)
+                        dest = string_util::strip_ws(cmd_to_do.parameters_[1]);
+
+                     conn->put(src, dest);
                   }
                   break;
 

@@ -349,8 +349,8 @@ void sftp_connection::put(const std::string & lpath, const std::string & rpath)
       sftp_open
       (
          this->sftp_sess_, 
-         lpath.c_str(), 
-         O_CREAT | O_TRUNC,   // TO DO : make configurable
+         rpath.c_str(), 
+         O_WRONLY | O_CREAT | O_TRUNC,   // TO DO : make configurable
          S_IRWXU              // TO DO : make configurable 
       ); 
 
@@ -366,17 +366,19 @@ void sftp_connection::put(const std::string & lpath, const std::string & rpath)
       do 
       {
          std::streamsize read_cnt = local_file.readsome(buffer.get(), BUFF_SIZE);
-         if (!local_file)
+         if (!local_file || read_cnt < 1)
             break;
 
          write_cnt = sftp_write(remote_file, buffer.get(), read_cnt);
          if (write_cnt != read_cnt)
             throw std::logic_error("Encountered error int put(): I/O error writing remote file '" + rpath + "'");
       }
-      while (local_file);
+      while (local_file.good());
    
-      if (!local_file.eof())
+      if (!local_file.good() && !local_file.eof())
          throw std::logic_error("Encountered error int put(): I/O error reading local file '" + lpath + "'");
+
+      sftp_close(remote_file);
    }
    catch (...)
    {
